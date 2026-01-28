@@ -34,9 +34,14 @@ class Fish:
         pass
     def cal_cohesion(self, all_fish):
         pass
-
-    def calculate_fitness(self, frames):
+    def cal_fear(self, shark_pos):
         pass
+    def draw(self, screen):
+        pass
+
+    # def calculate_fitness(self, frames):
+    #     pass
+    
 
 
 
@@ -49,3 +54,8 @@ class Shark:
     def update(self, all_fish):
         pass
         
+    def find_target(self, all_fish):
+        pass
+
+    def draw(self, screen):
+        pass
