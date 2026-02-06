@@ -6,25 +6,41 @@ from variables import *
 import math
 
 class Fish:
-    def __init__(self, x, y, image=None):
+    def __init__(self, x, y, image=None, dna=None):
         self.position = np.array([float(x), float(y)])
         self.velocity = np.random.uniform(-1, 1, 2)
         self.accelaration = np.array([0.0, 0.0])
         self.image = image
         
         self.isAlive = True
-        self.dna = np.array([4.0, 100.0, 2.5, 1.0, 1.0, 10.0])
+        self.time_alive = 0
+        self.cohesion_bonus = 0
+        self.danger_score=0
+        self.fitness = 0
+
+        if dna is not None:
+            self.dna = dna
+        else:
+            self.dna = np.array([4.0, 100.0, 2.5, 1.0, 1.0, 10.0])
 
     def update(self, all_fish, sharks):
         if not self.isAlive: return
+        self.time_alive += 1
         separation = self.cal_separation(all_fish) * self.dna[2]
         alignment  = self.cal_alignment(all_fish)  * self.dna[3]
         cohesion   = self.cal_cohesion(all_fish)   * self.dna[4]
         
         fear = np.array([0.0, 0.0])
+        current_danger_distance = 0
         for shark in sharks:
-            fear += self.cal_fear(shark.position)
+            fear_vector, distance = self.cal_fear(shark.position)
+            fear += fear_vector
+            current_danger_distance += distance
         fear *= self.dna[5]
+        
+        if len(sharks) > 0:
+            avg_distance = current_danger_distance / len(sharks)
+            self.danger_score += avg_distance
         self.accelaration += separation + alignment + cohesion + fear
         self.velocity += self.accelaration
         speed = np.linalg.norm(self.velocity)
@@ -100,6 +116,7 @@ class Fish:
                 count += 1
                 
         if count > 0:
+            self.cohesion_bonus += 1
             steering /= count
             vec_to_center = steering - self.position
             if np.linalg.norm(vec_to_center) > 0:
@@ -113,20 +130,22 @@ class Fish:
     def cal_fear(self, shark_pos):
         flee = self.position - shark_pos
         dist_sq = np.dot(flee, flee)
+        distance = np.sqrt(dist_sq)
         
         if dist_sq < ((self.dna[1] + 50)**2):
-            dist = np.sqrt(dist_sq)
-            if dist > 0:
-                flee = (flee / dist) * self.dna[0]
-            steer = flee - self.velocity
+            if distance > 0:
+                flee_vec = (flee / distance) * self.dna[0]
+            else:
+                flee_vec = np.array([0.0, 0.0])
+            steer = flee_vec - self.velocity
             
             max_fear_force = 0.5 
             magnitude = np.linalg.norm(steer)
             if magnitude > max_fear_force:
                 steer = (steer / magnitude) * max_fear_force
-            return steer
+            return (steer, distance)
             
-        return np.array([0.0, 0.0])
+        return (np.array([0.0, 0.0]), distance)
         
     def edges(self):
         if self.position[0] > SCREEN_WIDTH: self.position[0] = 0
@@ -144,8 +163,16 @@ class Fish:
             screen.blit(rotated_img, rect)
         else:
             pygame.draw.circle(screen, (0, 255, 255), self.position.astype(int), 3)
-    # def calculate_fitness(self, frames):
-    #     pass
+    def calculate_fitness(self, max_time):
+        w1 = 0.5
+        w2 = 0.2
+
+        time = self.time_alive / max_time if max_time > 0 else 0
+        cohesion = self.cohesion_bonus / max_time if max_time > 0 else 0
+        danger = (self.danger_score / self.time_alive) / 500.0 if self.time_alive> 0 else 0
+
+        self.fitness = time + (w1 * cohesion) + (w2 * danger)
+        return self.fitness
     
 class Shark:
     def __init__(self, x, y, image=None):

@@ -2,7 +2,7 @@ import pygame
 import sys
 import numpy as np
 from variables import *
-from genetic import Fish, Shark
+from agents import Fish, Shark
 
 
 def main() :
