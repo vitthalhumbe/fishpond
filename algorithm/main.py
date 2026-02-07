@@ -35,7 +35,8 @@ def main() :
 
     frames_ended = 0  # counting number of time alive
 
-
+    stats_history = []
+    MAX_GEN_TIME = 60 * FPS
 
     for _ in range(FISH_COUNT):
         x = np.random.randint(0, SCREEN_WIDTH)
@@ -51,6 +52,7 @@ def main() :
     running = True
     while running:
         frames_ended += 1
+        time_left = (MAX_GEN_TIME - frames_ended) / FPS
         # event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -72,7 +74,21 @@ def main() :
         
         fishes = alive_fishes
 
-        if len(fishes) == 0:
+        if len(fishes) == 0 or frames_ended >= MAX_GEN_TIME:
+
+            for survivor in fishes:
+                survivor.isAlive = False # Mark as done
+                dead_fishes.append(survivor)
+
+            best_fit = 0
+            total_fit = 0
+            for f in dead_fishes:
+                fit = f.calculate_fitness(frames_ended) # Use actual time elapsed
+                if fit > best_fit: best_fit = fit
+                total_fit += fit
+
+            avg_fit = total_fit / len(dead_fishes) if len(dead_fishes) > 0 else 0
+            stats_history.append(best_fit)
             new_population = evolution.next_generation(dead_fishes, frames_ended)
 
             dead_fishes.clear()
@@ -91,16 +107,17 @@ def main() :
                 sharks.append(Shark(x, y, image=shark_img)) 
 
         screen.fill(BACKGROUND_COLOR)
-
+        draw_live_graph(screen, stats_history, SCREEN_WIDTH - 220, 10, 200, 100)
         for fish in fishes:
             fish.draw(screen)
         
         for shark in sharks:
             shark.draw(screen)
 
-        stats_text = font.render(f"Gen: {evolution.generation_count} | Alive : {len(fishes)} | Time : {frames_ended}", True, (255, 255, 255))
-        screen.blit(stats_text, (10, 10))
-
+        timer_color = (255, 255, 255)
+        if time_left < 10: timer_color = (255, 50, 50) # Red warning
+        timer_text = font.render(f"Time: {time_left:.1f}s | Gen: {evolution.generation_count}", True, timer_color)
+        screen.blit(timer_text, (10, 10))
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -112,6 +129,28 @@ def main() :
     # quit
     
 
+# THIS IS AI GENERATED : 
+def draw_live_graph(screen, data, x, y, w, h):
+    s = pygame.Surface((w, h))
+    s.set_alpha(150) 
+    s.fill((0, 0, 0))
+    screen.blit(s, (x, y))
+    pygame.draw.rect(screen, (255, 255, 255), (x, y, w, h), 1)
+    if len(data) < 2: return 
+    max_val = max(data)
+    if max_val == 0: max_val = 1
+    
+    points = []
+    for i, val in enumerate(data):
+        px = x + (i / max(1, len(data)-1)) * w
+        py = (y + h) - (val / max_val) * h
+        points.append((px, py))
+        
+    if len(points) > 1:
+        pygame.draw.lines(screen, (0, 255, 0), False, points, 2)
+    font = pygame.font.SysFont("Arial", 12)
+    label = font.render(f"Max Fit: {data[-1]:.2f}", True, (0, 255, 0))
+    screen.blit(label, (x + 5, y + 5))
 
 
 if __name__ == '__main__':
