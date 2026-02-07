@@ -88,7 +88,7 @@ def main() :
                 total_fit += fit
 
             avg_fit = total_fit / len(dead_fishes) if len(dead_fishes) > 0 else 0
-            stats_history.append(best_fit)
+            stats_history.append((best_fit, avg_fit))
             new_population = evolution.next_generation(dead_fishes, frames_ended)
 
             dead_fishes.clear()
@@ -116,7 +116,7 @@ def main() :
 
         timer_color = (255, 255, 255)
         if time_left < 10: timer_color = (255, 50, 50) # Red warning
-        timer_text = font.render(f"Time: {time_left:.1f}s | Gen: {evolution.generation_count}", True, timer_color)
+        timer_text = font.render(f"Time: {time_left:.1f}s | Gen: {evolution.generation_count} | Fish Alive : {len(fishes)}", True, timer_color)
         screen.blit(timer_text, (10, 10))
         pygame.display.flip()
         clock.tick(FPS)
@@ -131,27 +131,48 @@ def main() :
 
 # THIS IS AI GENERATED : 
 def draw_live_graph(screen, data, x, y, w, h):
+    # Background Box
     s = pygame.Surface((w, h))
     s.set_alpha(150) 
     s.fill((0, 0, 0))
     screen.blit(s, (x, y))
+    
+    # Border
     pygame.draw.rect(screen, (255, 255, 255), (x, y, w, h), 1)
-    if len(data) < 2: return 
-    max_val = max(data)
+    
+    if len(data) < 2: return
+
+    # 1. Unpack Data
+    best_scores = [d[0] for d in data]
+    avg_scores  = [d[1] for d in data]
+    
+    # Normalize based on the highest BEST score (so both fit in scale)
+    max_val = max(best_scores)
     if max_val == 0: max_val = 1
     
-    points = []
-    for i, val in enumerate(data):
+    # 2. Draw BEST Line (Green)
+    best_points = []
+    for i, val in enumerate(best_scores):
         px = x + (i / max(1, len(data)-1)) * w
         py = (y + h) - (val / max_val) * h
-        points.append((px, py))
+        best_points.append((px, py))
+    pygame.draw.lines(screen, (0, 255, 0), False, best_points, 2)
+    
+    # 3. Draw AVG Line (Red)
+    avg_points = []
+    for i, val in enumerate(avg_scores):
+        px = x + (i / max(1, len(data)-1)) * w
+        py = (y + h) - (val / max_val) * h
+        avg_points.append((px, py))
+    pygame.draw.lines(screen, (255, 50, 50), False, avg_points, 2)
         
-    if len(points) > 1:
-        pygame.draw.lines(screen, (0, 255, 0), False, points, 2)
+    # Labels
     font = pygame.font.SysFont("Arial", 12)
-    label = font.render(f"Max Fit: {data[-1]:.2f}", True, (0, 255, 0))
-    screen.blit(label, (x + 5, y + 5))
-
+    label_best = font.render(f"Best: {best_scores[-1]:.2f}", True, (0, 255, 0))
+    label_avg  = font.render(f"Avg: {avg_scores[-1]:.2f}", True, (255, 50, 50))
+    
+    screen.blit(label_best, (x + 5, y + 5))
+    screen.blit(label_avg, (x + 5, y + 20))
 
 if __name__ == '__main__':
     print("hello from GAME")

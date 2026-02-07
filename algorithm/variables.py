@@ -10,7 +10,7 @@ BACKGROUND_COLOR = (0, 84, 119)
 
 
 FISH_COUNT = 50      # for testing, TODO : change it later
-SHARK_COUNT = 2      # it should be one always... not planned for multple sharks.
+SHARK_COUNT = 1      # it should be one always... not planned for multple sharks.
 
 FISH_DNA = {
     "max_speed": 5.0,

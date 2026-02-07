@@ -24,8 +24,8 @@ class Evolution:
         # this was elitism 
 
         while len(new_population) < self.population_size:
-            parent1 = self.tournament_selection(dead_population)
-            parent2 = self.tournament_selection(dead_population)
+            parent1 = self.tournament_selection(dead_population[:25])
+            parent2 = self.tournament_selection(dead_population[:25])
 
             child_dna = self.crossover(parent1, parent2)
             child_dna = self.mutation(child_dna)
