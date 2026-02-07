@@ -21,7 +21,14 @@ class Fish:
         if dna is not None:
             self.dna = dna
         else:
-            self.dna = np.array([4.0, 100.0, 2.5, 1.0, 1.0, 10.0])
+            self.dna = np.array([
+                np.random.uniform(2.0, 8.0),    # Index 0: Max Speed (2 to 8)
+                np.random.uniform(50.0, 200.0), # Index 1: Vision Radius (50 to 200)
+                np.random.uniform(0.1, 5.0),    # Index 2: Separation Weight
+                np.random.uniform(0.1, 5.0),    # Index 3: Alignment Weight
+                np.random.uniform(0.1, 5.0),    # Index 4: Cohesion Weight
+                np.random.uniform(0.1, 5.0)     # Index 5: Fear Weight
+            ])
 
     def update(self, all_fish, sharks):
         if not self.isAlive: return
@@ -61,7 +68,7 @@ class Fish:
     def cal_separation(self, all_fish):
         steering = np.array([0.0, 0.0])
         count = 0
-        personal_space = self.dna[1] / 2
+        personal_space = self.dna[1]
         
         for other in all_fish:
             if not other.isAlive: continue
@@ -139,7 +146,7 @@ class Fish:
                 flee_vec = np.array([0.0, 0.0])
             steer = flee_vec - self.velocity
             
-            max_fear_force = 0.5 
+            max_fear_force = 0.2 
             magnitude = np.linalg.norm(steer)
             if magnitude > max_fear_force:
                 steer = (steer / magnitude) * max_fear_force

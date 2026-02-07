@@ -14,7 +14,7 @@ class Evolution:
             fish.calculate_fitness(max_sim_time)
         
         dead_population.sort(key=lambda x:x.fitness, reverse=True)
-        print("Best fitness : ", dead_population[0])
+        print("Best fitness : ", dead_population[0].fitness)
         print("best DNA : ", dead_population[0].dna)
 
         new_population = []
@@ -45,7 +45,7 @@ class Evolution:
 
     def crossover(self, parent1, parent2):
         splitPoint = random.randint(1, len(parent1.dna) - 2)
-        child_dna = np.concatenate((parent1[:splitPoint], parent2[splitPoint:]))
+        child_dna = np.concatenate((parent1.dna[:splitPoint], parent2.dna[splitPoint:]))
         return child_dna
 
     def mutation(self, dna):
